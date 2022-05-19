@@ -1,0 +1,36 @@
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+    http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+    version="2.5">
+<filter>
+     <filter-name>encoding-filter</filter-name>
+     <filter-class>
+         org.springframework.web.filter.CharacterEncodingFilter
+     </filter-class>
+     <init-param>
+        <param-name>encoding</param-name>
+        <param-value>UTF-8</param-value>
+     </init-param>
+     <init-param>
+        <param-name>forceEncoding</param-name>
+        <param-value>true</param-value>
+     </init-param>
+  </filter>
+  <filter> 
+  <display-name>springMultipartFilter</display-name> 
+  <filter-name>springMultipartFilter</filter-name>
+   <filter-class>org.springframework.web.multipart.support.MultipartFilter</filter-class>
+    </filter>
+     <filter-mapping> <filter-name>springMultipartFilter</filter-name> <url-pattern>/*</url-pattern> </filter-mapping>
+<filter-mapping>
+      <filter-name>encoding-filter</filter-name>
+      <url-pattern>/*</url-pattern>
+</filter-mapping>
+<jsp-config>
+    <jsp-property-group>
+        <url-pattern>*.jsp</url-pattern>
+        <page-encoding>UTF-8</page-encoding>
+    </jsp-property-group>
+</jsp-config>
+</web-app>
