@@ -9,6 +9,12 @@ function setCategory(id){
 	var select = document.getElementById("category");
 	document.getElementById("categoryplaceholder").innerHTML=document.getElementById("cat"+id).innerHTML;
 	select.value=id;
+	setCategoryF();
+}
+function setCategoryP(id){
+	var select = document.getElementById("category");
+	document.getElementById("categoryplaceholder").innerHTML=document.getElementById("cat"+id).innerHTML;
+	select.value=id;
 }
 $(function() { // Dropdown toggle
 	$('.dropdown-toggle').click(function() { $(this).next('.dropdown').slideToggle();
@@ -22,16 +28,179 @@ $(function() { // Dropdown toggle
 	  { $('.dropdown').slideUp();}
 	});
 	});
-	
-function setName(){
-	var title=document.getElementById("title");
+async function fileUpload(){
+	  let formData = new FormData();
+	  for(var i=0;i<productimg.files.length;i++){
+		  
+		  if(validate(productimg.files[i])==true)
+			  formData.append("file", productimg.files[i]);
+		  formData.append("ssidd", "${ssidd}");
+	  
+	  }
+	  document.getElementById("loading").style.display="grid";
+	  let response = await fetch('/uploadimg', {
+	    method: "POST", 
+	    body: formData
+	  }); 
+
+	  //if (response.status == 200) {
+	    //document.location.reload(true);
+	  //}		
+}
+async function setName(){
+	let formData = new FormData();
 	var name=document.getElementById("productname").value;
 	if(name!=null){
-	title.innerHTML = name+" - sklep";
+		formData.append("name", name);
+		formData.append("ssidd", "${ssidd}");
+		let response = await fetch('/setNewProductName', {
+		    method: "POST", 
+		    body: formData
+		  }); 
+
+		  if (response.status == 200) {
+		    document.getElementById("title").innerHTML = name + " - sklep";
+		  }		
 	}
-	else{
-		title.innerHTML = "Nowy produkt - sklep";
+}
+async function setCategoryF(){
+	let formData = new FormData();
+	var name=document.getElementById("category").value;
+	if(name!=null){
+		formData.append("category", name);
+		formData.append("ssidd", "${ssidd}");
+		let response = await fetch('/setNewProductCategory', {
+		    method: "POST", 
+		    body: formData
+		  }); 
+
+		//if (response.status == 200) {
+	    //document.location.reload(true);
+	  //}		
+	}
+}
+async function setDescription(){
+	let formData = new FormData();
+	var name=document.getElementById("productdesc").value;
+	if(name!=null){
+		formData.append("description", name);
+		formData.append("ssidd", "${ssidd}");
+		let response = await fetch('/setNewProductDescription', {
+		    method: "POST", 
+		    body: formData
+		  }); 
+
+		//if (response.status == 200) {
+	    //document.location.reload(true);
+	  //}		
+	}
+}
+async function setPrice(){
+	let formData = new FormData();
+	var name=document.getElementById("productprice").value;
+	if(name!=null){
+		formData.append("price", name);
+		formData.append("ssidd", "${ssidd}");
+		let response = await fetch('/setNewProductPrice', {
+		    method: "POST", 
+		    body: formData
+		  }); 
+
+		//if (response.status == 200) {
+	    //document.location.reload(true);
+	  //}	
+	}
+}
+async function sendDeliverys(){
+	let formData = new FormData();
+	var name=document.getElementById("delopt").value;
+	if(name!=null){
+		formData.append("deliverys", name);
+		formData.append("ssidd", "${ssidd}");
+		let response = await fetch('/setNewProductDelivery', {
+		    method: "POST", 
+		    body: formData
+		  }); 
+
+		//if (response.status == 200) {
+	    //document.location.reload(true);
+	  //}	
+	}
+}
+function selectoption(id){
+	var size=document.getElementById("delopt0").value;
+	var opt=document.getElementById("delopt"+id);
+	var optpom=document.getElementById("deloptpom"+id);
+	if(opt.selected==false)
+		opt.selected=true;
+	else
+		opt.selected=false;
+	for(var i=0;i<size;i++)
+		{
+		opt=document.getElementById("delopt"+i);
+		optpom=document.getElementById("deloptpom"+i);
+		if(opt.selected)
+			{
+			optpom.selected=true;
+			}
 		}
+	boolpom=true;
+	sendDeliverys()
+}
+function selectoptionP(id){
+	var size=document.getElementById("delopt0").value;
+	var opt=document.getElementById("delopt"+id);
+	var optpom=document.getElementById("deloptpom"+id);
+	if(opt.selected==false)
+		opt.selected=true;
+	else
+		opt.selected=false;
+	for(var i=0;i<size;i++)
+		{
+		opt=document.getElementById("delopt"+i);
+		optpom=document.getElementById("deloptpom"+i);
+		if(opt.selected)
+			{
+			optpom.selected=true;
+			}
+		}
+	boolpom=true;
+}
+var boolpom=true;
+function re_setAll(){
+	var size=document.getElementById("delopt0").value;
+	var opt;
+	var optpom;
+	for(var i=0;i<=size;i++)
+		{
+		opt=document.getElementById("delopt"+i);
+		optpom=document.getElementById("deloptpom"+i);
+			opt.selected=boolpom;
+			optpom.selected=boolpom;
+		}
+	if(boolpom==true)
+		boolpom=false;
+	else
+		boolpom=true;
+	document.getElementById("delopt0").selected=false;
+	sendDeliverys();
+}
+function re_setAllP(){
+	var size=document.getElementById("delopt0").value;
+	var opt;
+	var optpom;
+	for(var i=0;i<=size;i++)
+		{
+		opt=document.getElementById("delopt"+i);
+		optpom=document.getElementById("deloptpom"+i);
+			opt.selected=boolpom;
+			optpom.selected=boolpom;
+		}
+	if(boolpom==true)
+		boolpom=false;
+	else
+		boolpom=true;
+	document.getElementById("delopt0").selected=false;
 }
 function send(){
 	var name=document.getElementById("productname").value;
@@ -39,8 +208,8 @@ function send(){
 	var category=document.getElementById("category").value;
 	var price=document.getElementById("productprice").value;
 	var delivery=document.getElementById("delopt").value;
-	if(name!=null && desc!=null && category!=null && price!=null && delivery!=null)
-		document.getElementById("productForm").submit();
+	if(name!=null && desc!=null && category!=null && price!=null && delivery!=null && name!="" && desc!="" && category!="" && price!="" && delivery!="")
+		document.location.replace("./3");
 	else
 		window.alert("Wypełnij wszystkie pola");
 }
@@ -50,30 +219,19 @@ function back(){
 </script>
 <meta charset="utf-8">
 <title id="title">Nowy produkt - sklep</title>
-<link rel="stylesheet"  href="/css/newproductstyle.css">
+<link rel="stylesheet"  href="${pageContext.request.contextPath}/css/newproductstyle.css">
 </head>
 <body>
 	<div id="container" style="display: grid;">
-		<form id="productForm" action="/createproduct" method="post">
-		<div style="display: flex;"><input type="text" id="productname" name="name" placeholder="Wpisz nazwę produktu" onchange="setName()">
-		<input style="display:none" type="text" id="category" name="id_category">
-		<div id="popselect">
-			<div id="nav">
-				<c:import url="http://localhost:8080/getCategories/"></c:import>
-			</div>
-		</div>
-		<input type="text" id="productdesc" name="description" placeholder="Dodaj opis produktu">
-		<input type="text" id="productprice" name="price" placeholder="Podaj cenę produktu"><label for="price">zł</label>
+		<a class="abutton" onclick="back()">&ltWstecz</a>
+		<div style="display: grid;">
+		<c:import charEncoding="UTF-8" url="${pageContext.request.contextPath}/getnewprod"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 		</div>
 		<hr>
 		<div style="display: flex;">
-		<select id="delopt" name="delivery" multiple>
-			<c:import url="http://localhost:8080/getDelivery"></c:import>
-		</select>
+		<c:import  charEncoding="UTF-8" url="${pageContext.request.contextPath}/getnewproddeliverys"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 		</div>
-		</form>
-		<a class="abutton" onclick="back()">&ltWstecz</a>
-		<a class="abutton" onclick="send()">Dalej&rt</a>
+		<a class="abutton" onclick="send()">Dalej&gt</a>
 	</div>
 </body>
 </html>

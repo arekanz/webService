@@ -1,5 +1,7 @@
 package com.webService.service.ratingSection;
 
+import java.sql.Date;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -12,6 +14,7 @@ public class reports {
 	private int id;
 	private int id_reported;
 	private int id_reason;
+	private Date report_date;
 	
 	public int getId() {
 		return id;
@@ -30,5 +33,11 @@ public class reports {
 	}
 	public void setId_reason(int id_reason) {
 		this.id_reason = id_reason;
+	}
+	public Date getReport_date() {
+		return report_date;
+	}
+	public void setReport_date(Date report_date) {
+		this.report_date = report_date;
 	}
 }

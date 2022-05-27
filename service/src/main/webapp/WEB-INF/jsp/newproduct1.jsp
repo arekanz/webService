@@ -5,53 +5,23 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script type="text/javascript">
-var validFilesTypes=["bmp","gif","png","jpg","jpeg"];
 
-function ValidateFile(file)
+async function fileUpload(){
+		  let formData = new FormData();
+		  for(var i=0;i<productimg.files.length;i++){
+				  formData.append("file", productimg.files[i]);
+				  formData.append("ssidd","${ssidd }");
+		  
+		  }
+		  document.getElementById("loading").style.display="block";
+		  let response = await fetch('/uploadimg', {
+		    method: "POST", 
+		    body: formData
+		  }); 
 
-{
-
-  var label = document.getElementById("imgalert");
-
-  var path = file.value;
-
-  var ext=path.substring(path.lastIndexOf(".")+1,path.length).toLowerCase();
-
-  var isValidFile = false;
-
-  for (var i=0; i<validFilesTypes.length; i++)    
-  {    
-    if (ext==validFilesTypes[i])    
-    {    
-        isValidFile=true;    
-        break;    
-    }    
-  }
-
-  if (!isValidFile)    
-  {
-    label.innerHTML="Plik niepoprawny lub niedopuszczone rozszerzenie pliku" +    
-     " rozszerzenia:\n\n"+validFilesTypes.join(", ");    
-  }    
-  return isValidFile;    
- }    
-function fileUpload(){
-		var file = document.getElementById("productimg");
-		var boole = true;
-	    if (!file.files) {
-	        console.error("This browser doesn't seem to support the `files` property of file inputs.");
-	    } else if (!file.files[0]) {
-	    	document.getElementById("imgalert".innerHTML = "Musisz wybrać pliki");
-	    } else {
-	    	for(var i=0;i<file.files.length;i++){
-	        var ffile = file.files[i];
-	        if(ffile.size==0)
-	        	boole=false;
-	    	}
-	    }
-		if(boole==true)
-		document.getElementById("productForm").submit();
-		
+		  if (response.status == 200) {
+		    document.location.reload(true);
+		  }		
 }
 function sendimg(){
 	var images = document.getElementById("images");
@@ -63,18 +33,19 @@ function sendimg(){
 </script>
 <meta charset="utf-8">
 <title>Nowy produkt - sklep</title>
-<link rel="stylesheet"  href="http://localhost:8080/css/newproductstyle.css">
+<link rel="stylesheet"  href="${pageContext.request.contextPath}/css/newproductstyle.css">
 </head>
 <body>
+<div id="loading"><h2>Trwa wgrywanie zdjęć na serwer.</h2><div id="loadanim"></div></div>
 	<div id="container" style="display: grid;">
-		<form enctype="multipart/form-data" id="productForm" action="../uploadimg" method="post">
-		<label for="img">Dodaj zdjęcie(a) produktu</label><input type="file" name="img" id="productimg" accept="image/*" multiple onchange="fileUpload()">
+		<form enctype="multipart/form-data" id="productForm" method="post">
+		<label for="img">Dodaj zdjęcie(a) produktu</label><input type="file" name="productimg" id="productimg" accept="image/*" multiple onchange="fileUpload()">
 		<p id="imgalert"></p>
 		</form>
 		<div id="images">
-			<c:import url="http://localhost:8080/showIMGs"></c:import>
+			<c:import charEncoding="UTF-8" url="${pageContext.request.contextPath}/showIMGs"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 		</div>
-		<a class="abutton" onclick="sendimg()">Dalej</a>
+		<a class="abutton" onclick="sendimg()">Dalej&gt</a>
 	</div>
 </body>
 </html>

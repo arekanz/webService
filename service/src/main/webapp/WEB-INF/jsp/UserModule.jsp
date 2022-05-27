@@ -1,14 +1,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
-
+<c:set var="ssidd" value="${ssidd }"></c:set>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script>
-
-function setAction(id,URL){
-	document.getElementById(id).action=URL;
-}
-
-</script>
 <c:if test="${logged==true }">
 <c:if test="${activated==0}">
 <div id="activationalert"><p class="warning">Konto nie zostało jeszcze aktywowane!</p></div>
@@ -17,11 +10,11 @@ function setAction(id,URL){
 
 <div id="menuUser">
 
-	<a id="banner" href="main"><img id="logo" /></a>
-	<script>document.getElementById("banner").href=window.location.origin+"/main";document.getElementById("logo").src=window.location.origin+"/img/logo.png";</script>
+	<a id="banner" href="${pageContext.request.contextPath}/main"><img id="logo" src="${pageContext.request.contextPath}/img/logo.png"/></a>
+	
+	<form id="searchForm" method="post" action="${pageContext.request.contextPath}/search">
 	<div id="searchContainer">
-	<form id="searchForm" method="post" action="">
-	<div style="float:left;display:flex">
+	<div style="display:flex">
 	<c:if test="${searchedtext!=null}">
 	<input class="searchclass" id="search" type="text" value="${searchedtext}" name="search" placeholder="Wyszukaj słowo lub frazę"/>
 	</c:if>
@@ -29,31 +22,27 @@ function setAction(id,URL){
 	<input class="searchclass" id="search" type="text" id="search" name="search" placeholder="Wyszukaj słowo lub frazę"/>
 	</c:if>
 	</div>
-	<div style="float:left;display:flex">
+	<div style="display:flex">
 	<c:if test="${currentcat!=0}"><input class="searchclass" type="text" id="category" value="${currentcat}" name="category"></input></c:if>
 	<c:if test="${currentcat==0}"><input class="searchclass" type="text" id="category" name="category"></input></c:if>
 	<div id="popselect">
 		<div id="nav">
-		<c:import url="http://localhost:8080/getCategories/"></c:import>
+		<c:import charEncoding="UTF-8" url="${pageContext.request.contextPath}/getCategories/"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 		</div>
 	</div>
 	</div>
-	<div style="float:left;display:flex">
-	<input id="buttonsearch" type="submit" value="0\">
+	<div style="display:flex">
+	<button id="buttonsearch" type="submit">Szukaj</button>
 	</div>
-	<div style="float:none;">
 	</div>
-	
-	<script>
-	setAction("searchForm",window.location.origin+'/search');
-	</script>
 	</form>
-	</div>
+	
 	<div id="userContainer">
- 	  <c:if test="${logged==true}"><div id="hellouser"><h3>Zalogowano jako, ${userlogin}!</h3></div> <div id="usrsetcon"> <a id="logout">Wyloguj się</a><a id="settings">Ustawienia</a></div><script>document.getElementById("logout").href=window.location.origin+"/logout";
- 		document.getElementById("settings").href=window.location.origin+"/settings";</script></c:if>
- 	  <c:if test="${logged==false}">
- 	  <form id="loginForm" method="post" action="">
+ 	  <c:if test="${logged!=null && logged==true && userlogin!=null}"><div id="hellouser"><h3>Zalogowano jako, ${userlogin}!</h3></div> 
+ 	  <div id="usrsetcon"> <a href="${pageContext.request.contextPath}/logout" id="logout">Wyloguj się</a>
+ 	  <a href="${pageContext.request.contextPath}/settings" id="settings">Ustawienia</a></div></c:if>
+ 	  <c:if test="${logged==null || logged==false || userlogin==null}">
+ 	  <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login">
  	  <div id="nav2">
  	  <a class="dropdown-toggle" href="#">Zaloguj Się</a>
  	  	<ul class="dropdown"><li>
@@ -65,11 +54,7 @@ function setAction(id,URL){
 		</div>
 		</form>
 		
-		<a id="register">Zarejestruj Się</a>
-		<script>
-			setAction("loginForm",window.location.origin+'/login');
-			document.getElementById("register").href=window.location.origin+"/register";
-		</script>
+		<a id="register" href="${pageContext.request.contextPath}/register">Zarejestruj Się</a>
 		</c:if>
 	</div>
 		<div style="float:none"></div>

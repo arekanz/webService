@@ -10,7 +10,6 @@ public class communicates {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private int id;
-	private short type;
 	private String text;
 	
 	public int getId() {
@@ -18,12 +17,6 @@ public class communicates {
 	}
 	public void setId(int id) {
 		this.id = id;
-	}
-	public short getType() {
-		return type;
-	}
-	public void setType(short type) {
-		this.type = type;
 	}
 	public String getText() {
 		return text;

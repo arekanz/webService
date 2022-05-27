@@ -75,7 +75,7 @@ function pageChange(){
 		</div>
 		<hr>
 		<label for="contenttype">Wybierz jak chcesz dodać zawartość:</label>
-		<select id="pagecontent" onchange="pageChange()">
+		<select name="contenttype" id="pagecontent" onchange="pageChange()">
 			<option value="1" selected>Wgraj plik .html na serwer</option>
 			<option value="2">Utwórz zawartość w tym formularzu</option>
 		</select>

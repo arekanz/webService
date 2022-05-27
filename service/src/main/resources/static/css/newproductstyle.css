@@ -11,19 +11,19 @@ ul.dropdown li a { text-decoration: none; padding: 0em 1em; display: block; }
 	border: 2px #777 solid;
 }
 #input{
-	margin: 5px 5%;
+	margin: 10px;
 }
 div#nav a{
-	margin: 5px 5%;
 	display:block;
 	width:100%;
 	height: 18px;
 	padding: 6px;
 	background-color: #777;
-	max-width:208px;
+	max-width:288px;
 	position:relative;
 }
 #nav{
+	margin: 10px;
 	width:100%;
 	height: 32px;
 	background-color: #777;
@@ -39,18 +39,171 @@ div#nav a{
 	resize:vertical;
 }
 .productimages{
-	width: 20%;
+	height:60px;
 	margin-left: 5%;
 	margin-top: 20px;
 	border: 1px solid white;
 }
 .abutton{
-	width: 30%;
+	width: 90%;
 	height: 34px;
 	padding: 3px;
+	margin: 10px 5%;
 	font-size: 30px;
 	color: white;
 	background-color: #777;
 	border: 1px black solid;
 	border-radius: 5px;
+}
+#images{
+	max-height: 310px;
+	width: 90%;
+ 	overflow-x: scroll;
+ 	overflow-y: hidden;
+  	margin: 100px auto;
+  	text-align: right;
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+.closebutton{
+	position: relative;
+	top: +25px;
+	left: -15px;
+	color: white;
+	background-color:red;
+	width: 12px;
+	height:12px;
+	padding:0 3px 8px 1px;
+	display: inline-block;
+}
+.slide {
+    float: left;
+    list-style-type: none;
+    margin-left: 10px;
+    max-height: 180px;
+}
+/*@media print{*/
+.page
+      {
+      	break-inside: avoid;
+      }
+/*}*/
+.slides {
+    display: flex;
+    height: 400px;
+    margin: 0;
+    padding: 0;
+  }
+ #container{
+ 	margin: 50px auto;
+ 	padding: 5px;
+ }
+ input{
+ 	width: 80%;
+ 	height: 34px;
+ 	padding: 3px;
+ 	border: 2px solid silver;
+ 	border-radius: 5px;
+ 	font-size: 30px;
+ 	margin: 10px;
+ }
+#delopt{
+  display: none;
+  }
+option{
+	font-size: 24px;
+	border: 1px solid white;
+	border-radius: 5px;
+	margin: 2px;
+}
+option:checked{
+	background-color: white;
+	border-color: blue;
+}
+#loading{
+	width: 100%;
+	height: 1000px;
+	display: none;
+	text-align: center;
+	overflow: hidden;
+	position: fixed;
+	background-color: white;
+	z-index: +2;
+}
+label{
+	font-size: 24px;
+}
+#loadanim {
+	display: grid;
+	margin: 20px auto;
+            border-top: 20px solid rgba(0,0,0,0);
+            border-right: 20px solid yellow;
+            border-bottom: 20px solid red;
+            border-left: 20px solid purple;
+            border-radius: 50%;
+            width: 165px;
+            height: 165px;
+            animation: animacja 5s linear infinite;
+        }
+
+        @keyframes animacja {
+            0% {
+                transform: rotate(0);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+#podglad{
+	width: 94%;
+	margin: 5px auto;
+	outline: 1px solid silver;
+}
+#addimg{
+	width: 200px;
+	height: 200px;
+	font-size: 180px;
+	font-weight: 900;
+	color: silver;
+	border: 5px solid silver;
+	text-align: center;
+}
+img{
+	max-height: 180px;
+}
+#imgbox{
+	display: none;
+	max-height: 310px;
+	width: 90%;
+ 	overflow-x: scroll;
+ 	overflow-y: hidden;
+  	margin: 100px auto;
+  	text-align: right;
+}
+#imgadd{
+	display: none;
+	position: fixed;
+	width: 100%;
+	height: 1000px;
+	top: 0;
+	z-index:+5;
+	background-color: white;
 }

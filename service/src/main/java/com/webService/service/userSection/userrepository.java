@@ -18,4 +18,12 @@ public interface userrepository extends JpaRepository<user, Integer>{
 	@Modifying
 	@Query(value = "insert into user(login,password,email) values (:login,:password,:email)", nativeQuery = true)
 	 void insertUser(@Param("login") String login,@Param("password") String password,@Param("email") String email);
+	@Transactional
+	@Modifying
+	@Query(value = "update user set email=:email where id=:id", nativeQuery = true)
+	 void changeEmail(@Param("id") int id,@Param("email") String email);
+	@Transactional
+	@Modifying
+	@Query(value = "update user set password=:password where id=:id", nativeQuery = true)
+	 void changePass(@Param("id") int id,@Param("password") String password);
 }

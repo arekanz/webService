@@ -10,7 +10,7 @@
 <meta charset="utf-8">
 <title id="tytulstrony"> - Sklep</title>
 
-<link rel="stylesheet"  href="http://localhost:8080/css/style.css">
+<link rel="stylesheet"  href="${pageContext.request.contextPath}/css/style.css">
 <script type="text/javascript">
 	function addcomment(){
 		document.getElementById("commentform").style.display = "block";
@@ -47,15 +47,24 @@
 	
 	<div id="container">
 	<div id="product">
-		<c:import url="http://localhost:8080/show/getProduct/"></c:import>
+		<c:import charEncoding="UTF-8" url="${pageContext.request.contextPath}/show/getProduct/"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 		<div id="productContent">
 		<hr>
-		<c:if test="${currentproductpath!=null}">
-    			<c:if test="${currentproductpath!=null}"><c:import url="${currentproductpath}.html"></c:import></c:if>
-    			</c:if>
-    			<c:if test="${currentproductpath==null}">
-    				<script>window.location.replace("../product/")</script>
-    			</c:if>
+		<p style="page-break-after: always;"> </p>
+		<div id="includedcontent">
+		<script>
+	function iResize() {
+	    document.getElementById('podglad').style.height = (document.getElementById('podglad').contentWindow.document.body.offsetHeight + 20) + 'px';
+	}
+	</script>
+		<form id="pdgpom" style="display: none" target="podglad" action="${pageContext.request.contextPath}/getContent" method="get">
+    <input type="text" name="ssidd" value="${ssidd }" />
+    <input type="submit">
+	</form>
+	<script type="text/javascript">document.getElementById("pdgpom").submit();document.getElementById("pdgpom").innerHTML = "";</script>
+			<iframe onload="iResize()" name="podglad" id="podglad" src="#"></iframe>
+		</div>
+		<p style="page-break-before: always;"> </p>
 			<div id="commentContainer">
 			<hr>
 			<h4>Komentarze</h4>
@@ -67,7 +76,7 @@
 				</form>
 				<p id="commentalert">Komentarz nie może być pusty</p>
 			</c:if>
-			<c:import url="http://localhost:8080/show/comments/"></c:import>
+			<c:import charEncoding="UTF-8" url="${pageContext.request.contextPath}/show/comments/"><c:param name="ssidd" value="${ssidd }"></c:param></c:import>
 			</div>
 		</div>
 	</div>

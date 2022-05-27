@@ -8,13 +8,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class loginMethods implements login{
-	public boolean logIn(String login, String Password,userrepository userRep,user Result) {
+	public boolean logIn(String login, String Password,userrepository userRep) {
 		user User=new user();
 			User=userRep.getUserByLogin(login);
 		if(User!=null)
 		if(Password.equals(User.getPassword()))
 		{
-			Result=User;
 			return true;
 		}
 		
