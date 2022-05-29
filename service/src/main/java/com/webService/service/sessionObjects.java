@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.webService.service.shopSection.categories;
+import com.webService.service.shopSection.newproduct;
+import com.webService.service.shopSection.newproductcontent;
 import com.webService.service.shopSection.shopentity;
 import com.webService.service.shopSection.shopentitycontent;
 import com.webService.service.shopSection.shopentityinfo;
@@ -17,11 +19,12 @@ import com.webService.service.userSection.user;
 public class sessionObjects {
 	public user User;
 	public previllages UserPrevillages;
-	public shopentity NewProduct = new shopentity();
+	public newproduct NewProduct = new newproduct();
+	public boolean newproductchecked=false;
 	public String contentimg="";
 	public shopentity CurrentProduct = new shopentity();
 	public shopentitycontent CurrentProductContent = new shopentitycontent();
-	public shopentitycontent NewProductContent = new shopentitycontent();
+	public newproductcontent NewProductContent = new newproductcontent();
 	public String searchedtext;
 	public String searchListLine;
 	public String searchedpages;
@@ -64,7 +67,7 @@ public class sessionObjects {
 		NewProduct=null;
 		CurrentProduct = new shopentity();
 		CurrentProductContent = new shopentitycontent();
-		NewProductContent = new shopentitycontent();
+		NewProductContent = new newproductcontent();
 		searchedtext=null;
 		searchListLine=null;
 		searchedpages=null;

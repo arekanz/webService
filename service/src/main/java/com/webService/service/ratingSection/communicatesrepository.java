@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface communicatesrepository extends JpaRepository<communicates, Integer> {
 	@Query(value="select * from communicates where id>:number AND id<(:number+5001)",nativeQuery=true)
 	List<communicates> findByType(@Param("number") int number);
+	@Query(value="select * from communicates where id=:number",nativeQuery=true)
+	communicates exist(@Param("number") int id);
 	@Transactional
 	@Modifying
 	@Query(value = "insert into communicates(id,text) values (:id,\"\")", nativeQuery = true)

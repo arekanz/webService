@@ -51,6 +51,7 @@ import org.springframework.util.FileCopyUtils;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,7 +113,10 @@ public class content {
 
 	public String categorylinedrop;
 	
-	
+	@Autowired
+	private newproductrepository newproducts;
+	@Autowired
+	private newproductcontentrepository newproductscontent;
 	@Autowired
 	private communicatesrepository Communicates;
 	@Autowired
@@ -173,7 +177,12 @@ public class content {
 			getSessionObject(req).lastURL="newproduct/"+id;
 			return logInFalse();
 		}
-		
+		if(newproducts.findByUserId(getSessionObject(req).User.getId())!=null && newproducts.findByUserId(getSessionObject(req).User.getId()).size()>0 && !getSessionObject(req).newproductchecked)
+		{
+			return new ModelAndView("newproduct");
+		}
+		if(getSessionObject(req).newproductchecked==false)
+			this.createNewProduct(req.getSession().getId());
 		return new ModelAndView(urlpom);
 	}
 	@RequestMapping(value = "/getImg/{id_product}/{img_name}", method = RequestMethod.GET)
@@ -246,11 +255,35 @@ public class content {
 		}
 		return firstPage(req);
 	}
+	@RequestMapping("/serveroptions/setPrevillages")
+	public ModelAndView previllages(HttpServletRequest req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+		getSessionObject(req).lastURL="/serveroptions/previllages";
+		return new ModelAndView("previllages");
+		}
+		return firstPage(req);
+	}
 	@RequestMapping("/serveroptions/communicates")
 	public ModelAndView communicates(HttpServletRequest req) {
 		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
 		getSessionObject(req).lastURL="/serveroptions/communicates";
 		return new ModelAndView("communicates");
+		}
+		return firstPage(req);
+	}
+	@RequestMapping("/serveroptions/addCategories")
+	public ModelAndView addCategories(HttpServletRequest req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+		getSessionObject(req).lastURL="/serveroptions/addCategories";
+		return new ModelAndView("categories");
+		}
+		return firstPage(req);
+	}
+	@RequestMapping("/serveroptions/deliverys")
+	public ModelAndView deliverysoptions(HttpServletRequest req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+		getSessionObject(req).lastURL="/serveroptions/deliverys";
+		return new ModelAndView("deliverys");
 		}
 		return firstPage(req);
 	}
@@ -261,17 +294,17 @@ public class content {
 			List<reports> reps = new ArrayList<>();
 			String pom="";
 			reports repp;
-			if(type=="all" || type.isBlank())
+			if(type.equals("all") || type.isBlank())
 			{
 				reps=Reports.findAll();
 			}
-			else if(type=="products") {
+			else if(type.equals("products")) {
 				reps=Reports.findByType(0);
 			}
-			else if(type=="comments") {
+			else if(type.equals("comments")) {
 				reps=Reports.findByType(5000);
 			}
-			else if(type=="users") {
+			else if(type.equals("users")) {
 				reps=Reports.findByType(10000);
 			}
 			if(reps.size()>0)
@@ -315,13 +348,13 @@ public class content {
 			List<communicates> reps = new ArrayList<>();
 			String pom="";
 			communicates repp;
-			if(type=="products") {
+			if(type.equals("products")) {
 				reps=Communicates.findByType(0);
 			}
-			else if(type=="comments") {
+			else if(type.equals("comments")) {
 				reps=Communicates.findByType(5000);
 			}
-			else if(type=="users") {
+			else if(type.equals("users")) {
 				reps=Communicates.findByType(10000);
 			}
 			if(reps.size()>0)
@@ -329,11 +362,11 @@ public class content {
 			{
 				repp=reps.get(i);
 				if(!repp.getText().isBlank())
-					pom+="<div class=\"communicate\" id=\"communicate"+repp.getId()+"\" onclick='editComm(\""+type+"\","+repp.getId()+")'>"+repp.getText()+"</div>";
+					pom+="<input class=\"communicate\" id=\"communicate"+repp.getId()+"\" value=\""+repp.getText()+"\" read-only=\"true\" placeholder=\"Podaj treść komunikatu\" onclick='editComm(\""+type+"\","+repp.getId()+")'><button style=\"display: none;\" id=\"baton"+repp.getId()+"\" onclick='addComm(\""+type+"\","+repp.getId()+")'>Zapisz</button>";
 				else
-					pom+="<input type=\"text\" class=\"communicate\" id=\"communicate"+repp.getId()+"\">"+repp.getText()+"</input><button onclick='addComm(\""+type+"\","+repp.getId()+")'>Dodaj</button>";
+					pom+="<input type=\"text\" class=\"communicate\" id=\"communicate"+repp.getId()+"\" placeholder=\"Podaj treść komunikatu\"></input><button onclick='addComm(\""+type+"\","+repp.getId()+")'>Dodaj</button>";
 			}
-			return ResponseEntity.ok(String.valueOf("<div class=\"count\">"+reps.size()+"</div>"+pom));
+			return ResponseEntity.ok(String.valueOf("<div class=\"count\">"+(reps.size()-1)+"</div>"+pom));
 		}
 		return ResponseEntity.ok("Nie posiadasz uprawnień");
 	}
@@ -344,8 +377,9 @@ public class content {
 			if(!text.isBlank())
 			{
 				if(id!=0) {
-				Communicates.updateCommunicates(id, text);
-				Communicates.insertCommunicates(id+1);
+					Communicates.updateCommunicates(id, text);
+					if(Communicates.exist(id+1)==null)
+						Communicates.insertCommunicates(id+1);
 				return ResponseEntity.ok("success");
 				}
 			}
@@ -353,17 +387,272 @@ public class content {
 		}
 		return ResponseEntity.ok("Nie posiadasz uprawnień");
 	}
+	@RequestMapping("/serveroptions/getCategories")
+	@ResponseBody
+	public ResponseEntity<?> getCategories(@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			List<categories> cats = new ArrayList<>();
+			cats=this.AllCategories.findAll();
+			String pom = "";
+			if(cats!=null)
+			{
+				for(int i=0;(i<9 && i<cats.size());i++) {
+					pom+="<ul class=\"list\" style=\"display: block; border:1px solid black;\">";
+					pom+="<li><input type='text' readonly='true' placeholder='Podaj nazwę kategorii' id='category"+cats.get(i).getId()+"' value='"+cats.get(i).getName()+"'>"
+							+ "<div id='concategorybutt"+cats.get(i).getId()+"'>"
+							+ "<button id='categorybutt"+cats.get(i).getId()+"' onclick='edit("+cats.get(i).getId()+")'>Edytuj</button>"
+							+ "</div>"		
+								+ "<button style=\"display: none\" onclick='wykonaj("+cats.get(i).getId()+",\"changeCategories\")' id=\"addbutt"+cats.get(i).getId()+"\">Zapisz zmianę</button>";
+					pom+=getCategoriesMethodPom(cats.get(i).getId(),cats);
+					pom+="</li></ul>";
+				}
+				return ResponseEntity.ok(pom);
+			}
+			return ResponseEntity.ok("Nie znaleziono kategorii");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	private String getCategoriesMethodPom(int id,List<categories> lista) {
+			String pom="";
+			List<Integer> czyjest = new ArrayList<>();
+			int licznik=0;
+			for(int i=9;i<lista.size();i++) {
+				if(lista.get(i).getId()>=id*10 && lista.get(i).getId()<id*10+10) {
+					pom+="<ul class=\"list\" style=\"display: block; margin: 0 5px; border:1px solid black;\">"
+							+ "<li><input type='text' readonly='true' placeholder='Podaj nazwę subkategorii' id='category"+lista.get(i).getId()+"' value='"+lista.get(i).getName()+"'> - podkategoria dla: "+AllCategories.getById(id).getName()+""
+									+ "<div id='concategorybutt"+lista.get(i).getId()+"'>"
+											+ "<button id='categorybutt"+lista.get(i).getId()+"' onclick='edit("+lista.get(i).getId()+")'>Edytuj</button>"
+											+ "<button onclick='deleteC("+lista.get(i).getId()+")'>Usuń</button></div>"
+													+ "<button style=\"display: none\" onclick='wykonaj("+lista.get(i).getId()+",\"changeCategories\")' id=\"addbutt"+lista.get(i).getId()+"\">Zapisz zmianę</button>";
+					pom+=getCategoriesMethodPom(lista.get(i).getId(),lista);
+			    	pom+="</li></ul>";
+			    	czyjest.add(lista.get(i).getId());
+				}
+			}
+			for(int i=id*10;i<id*10+10;i++)
+				if(!czyjest.contains(i))
+				{
+					licznik=i;
+					break;
+				}
+			if(licznik!=0)
+			{
+				pom+="<ul class=\"list\" style=\"display: block; margin: 0 5px;\">"
+						+ "<li><input type='text' placeholder='Podaj nazwę subkategorii' id='category"+licznik+"'> - podkategoria dla: "+AllCategories.getById(id).getName()+"<button id='categorybutt"+licznik+"' onclick='setCat("+licznik+")'>Dodaj</button>";
+		    	pom+="</li></ul>";
+			}
+		return pom;
+	}
+	@RequestMapping("/setCategories")
+	@ResponseBody
+	public ResponseEntity<?> setCategories(@RequestParam("id") int id,@RequestParam("text") String text,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			if(!text.isBlank())
+			{
+				if(id!=0) {
+					AllCategories.insertcategories(id, text);
+				this.changeInCat=true;
+				return ResponseEntity.ok("success");
+				}
+			}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/changeCategories")
+	@ResponseBody
+	public ResponseEntity<?> changeCategories(@RequestParam("id") int id,@RequestParam("text") String text,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			if(!text.isBlank())
+			{
+				if(id!=0) {
+					AllCategories.updatecategories(id, text);
+				this.changeInCat=true;
+				return ResponseEntity.ok("success");
+				}
+			}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/deleteCategories")
+	@ResponseBody
+	public ResponseEntity<?> deleteCategories(@RequestParam("id") int id,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+				if(id!=0) {
+					AllCategories.deletecategories(id);
+					this.changeInCat=true;
+				return ResponseEntity.ok("success");
+				}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/serveroptions/getDeliverys")
+	@ResponseBody
+	public ResponseEntity<?> serveroption_getDeliverys(@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+			List<deliveryoptions> cats = new ArrayList<>();
+			cats=this.Deliverys.findAll();
+			String pom = "";
+			if(cats!=null)
+			{
+				for(int i=0;i<cats.size();i++) {
+					pom+="<div style='display: flex;'>"
+						+ "<input type='text' readonly='true' id='deliveryname"+cats.get(i).getId()+"' value='"+cats.get(i).getService_name()+"' placeholder='Nazwa usługi'>"
+						+ "<input type='text' readonly='true' id='deliveryC"+cats.get(i).getId()+"' value='"+cats.get(i).getDeliver()+"' placeholder='Nazwa usługodawcy'>"
+						+ "<input type='number' step='1' min='0' readonly='true' id='deliverytime"+cats.get(i).getId()+"' value='"+cats.get(i).getTime()+"' placeholder='Czas realizacji usługi'>"
+						+ "<input type='number' min='0' step='0.01' readonly='true' id='deliveryprice"+cats.get(i).getId()+"' value='"+cats.get(i).getPrice()+"' placeholder='Cena usługi'>"
+						+ "<div style='display: flex;' id='butt"+cats.get(i).getId()+"'><button onclick='edit("+cats.get(i).getId()+")'>Edytuj</button>"
+						+ "<button onclick='deleteC("+cats.get(i).getId()+")'>Usuń</button></div>"
+						+ "<button style='display:none;' onclick='wyslij("+cats.get(i).getId()+",\"changeDeliverys\")' id='send"+cats.get(i).getId()+"'>Zapisz</button>"
+						+ "</div>";
+				}
+				pom+="<div style='display: flex;'>"
+						+ "<input type='text' id='deliveryname"+(cats.size()+1)+"' placeholder='Nazwa usługi'>"
+						+ "<input type='text' id='deliveryC"+(cats.size()+1)+"' placeholder='Nazwa usługodawcy'>"
+						+ "<input type='number' step='1' min='0' id='deliverytime"+(cats.size()+1)+"' placeholder='Czas realizacji usługi'>"
+						+ "<input type='number' min='0' step='0.01' id='deliveryprice"+(cats.size()+1)+"' placeholder='Cena usługi'>"
+						+ "<button onclick='wyslij("+(cats.size()+1)+",\"setDeliverys\")' id='send"+(cats.size()+1)+"'>Dodaj</button>"
+						+ "</div>";
+				return ResponseEntity.ok(pom);
+			}
+			return ResponseEntity.ok("Nie znaleziono kategorii");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/setDeliverys")
+	@ResponseBody
+	public ResponseEntity<?> setDeliverys(@RequestParam("id") int id,@RequestParam("name") String name,@RequestParam("deliver") String deliver,@RequestParam("time") int time,@RequestParam("price") float price,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			if(!name.isBlank())
+			{
+				if(id!=0) {
+					Deliverys.insertDeliverys(id, name,deliver,time,price);
+				return ResponseEntity.ok("success");
+				}
+			}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/changeDeliverys")
+	@ResponseBody
+	public ResponseEntity<?> changeDeliverys(@RequestParam("id") int id,@RequestParam("name") String name,@RequestParam("deliver") String deliver,@RequestParam("time") int time,@RequestParam("price") float price,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			if(!name.isBlank())
+			{
+				if(id!=0) {
+					Deliverys.updateDeliverys(id, name, deliver, time, price);
+				return ResponseEntity.ok("success");
+				}
+			}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/deleteDeliverys")
+	@ResponseBody
+	public ResponseEntity<?> deleteDeliverys(@RequestParam("id") int id,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+				if(id!=0) {
+					Deliverys.deleteDeliverys(id);
+				return ResponseEntity.ok("success");
+				}
+			return ResponseEntity.ok("failure");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/getUsers/{type}")
+	@ResponseBody
+	public ResponseEntity<?> getUsers(@PathVariable("type") String type,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250) {
+			List<previllages> reps = new ArrayList<>();
+			user searchedUser = null;
+			String pom="";
+			previllages repp;
+			if(type.equals("all") || type.isBlank()) {
+				reps=UsersPrev.findAll();
+			}
+			else{
+				searchedUser=Users.getUserByLogin(type);
+			}
+			if(reps.size()>0 || searchedUser!=null) {
+				for(int i=0;i<reps.size();i++)
+				{
+					repp=reps.get(i);
+					pom+="<div class=\"Usercontainer\"><div class=\"userinfo\"><div id='userlogin"+repp.getId_user()+"'>"+Users.getById(repp.getId_user()).getLogin()+"</div> - poziom uprawnień: "+repp.getLevel()+"</div>";
+					if(getSessionObject(req).getUserPrevillages(UsersPrev)==255 && !getSessionObject(req).User.getLogin().equals(Users.getById(repp.getId_user()).getLogin()))
+					pom+="<button onclick='changePrevs("+repp.getId_user()+")'>Zmień uprawnienia</button><button onclick='deletePrevs("+repp.getId()+","+repp.getId_user()+")'>Usuń uprawnienia</button>";
+					pom+="</div>";
+				}
+				if(searchedUser!=null)
+				{
+					repp=UsersPrev.findByUserId(searchedUser.getId());
+					pom+="<div class=\"Usercontainer\"><div class=\"userinfo\"><div id='userlogin"+searchedUser.getId()+"'>"+searchedUser.getLogin()+"</div> - poziom uprawnień: ";
+					if(repp!=null)
+						pom+=repp.getLevel()+"</div>";
+					else
+						pom+="0</div>";
+					if(getSessionObject(req).getUserPrevillages(UsersPrev)==255 && !getSessionObject(req).User.getLogin().equals(searchedUser.getLogin())) {
+						if(repp!=null)
+							pom+="<button onclick='changePrevs("+repp.getId_user()+")'>Zmień uprawnienia</button><button onclick='deletePrevs("+repp.getId()+","+repp.getId_user()+")'>Usuń uprawnienia</button>";
+						else
+							pom+="<button onclick='setPrevs("+searchedUser.getId()+")'>Nadaj uprawnienia</button>";
+					}
+					pom+="</div>";
+				}
+			return ResponseEntity.ok(pom);
+			}
+			return ResponseEntity.ok(String.valueOf("<p>Nie znaleziono wyników</p>"));
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/setPrevs/{id}")
+	@ResponseBody
+	public ResponseEntity<?> setPrevs(@PathVariable("id") int id,@RequestParam("level") int level,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+			if(UsersPrev.findByUserId(id)==null)
+				UsersPrev.insertPrev(id,(short) level);
+			ResponseEntity.ok("success");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/changePrevs/{id}")
+	@ResponseBody
+	public ResponseEntity<?> changePrevs(@PathVariable("id") int id,@RequestParam("level") int level,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+			if(UsersPrev.findByUserId(id)!=null)
+				UsersPrev.updatePrev(id,(short) level);
+			ResponseEntity.ok("success");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
+	@RequestMapping("/deletePrevs/{id}")
+	@ResponseBody
+	public ResponseEntity<?> deletePrevs(@PathVariable("id") int id,@RequestParam("ssidd") String req) {
+		if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+			if(UsersPrev.findByUserId(id)!=null) {
+				UsersPrev.deletePrev(id);
+				UsersPrev.deletePrevM(UsersPrev.findAll().size(), id);
+			}
+			ResponseEntity.ok("success");
+		}
+		return ResponseEntity.ok("Nie posiadasz uprawnień");
+	}
 	@GetMapping("/adminSettings")
 	@ResponseBody
 	public String adminSettings(@RequestParam("ssidd") String req) {
-		String pom="";
+		String pom="<p style=\"text-align: center\">Panel Administracyjny</p><br>";
 		if(getSessionObject(req).getUserPrevillages(UsersPrev)>250)
 		{
 			pom+="<button class=\"settings\" onclick=\"reports()\">Zgłoszenia</button>";
 			pom+="<button class=\"settings\" onclick=\"addcommunicates()\">Komunikaty zgłoszeń</button>";
 			pom+="<button class=\"settings\" onclick=\"addcategories()\">Dodaj kategorie</button>";
-			pom+="<button class=\"settings\" onclick=\"adddeliverys()\">Dodaj opcje wysyłek</button>";
-			pom+="<button class=\"settings\" onclick=\"setprevillages()\">Nadaj uprawnienia</button>";
+			if(getSessionObject(req).getUserPrevillages(UsersPrev)==255) {
+				pom+="<button class=\"settings\" onclick=\"adddeliverys()\">Dodaj opcje wysyłek</button>";
+				pom+="<button class=\"settings\" onclick=\"setprevillages()\">Nadaj uprawnienia</button>";
+			}
 			return pom;
 		}
 		return "Nie posiadasz uprawnień";
@@ -415,8 +704,11 @@ public class content {
     @RequestMapping("/logout")
     @ResponseBody
     public RedirectView logout(Model model, HttpServletRequest req) {
-    	accus.get(req.getSession().getId()).clearSession();
+    	if(getSessionObject(req).User!=null) {
+    		getSessionObject(req).clearSession();
     		return new RedirectView(getSessionObject(req).lastURL);
+    	}
+    	return new RedirectView("/main");
     }
     
     private String fillPrice(float price) {
@@ -574,25 +866,76 @@ public class content {
     	getSessionObject(req).searchedBool=false;
     	return new ModelAndView("search");
     }
-    /*private List<shopentity> searchProducts(String search,String cat_Id) {
-    	String sql = "SELECT * FROM shopentity WHERE category_id like '"+cat_Id+"%' and (name like '%"+search+"%' or description like '%"+search+"%')";
-    	List<Map<String, Object>> rows = sup.getJdbcTemplate().queryForList(sql);
-		
-		List<shopentity> result = new ArrayList<shopentity>();
-		for(Map<String, Object> row:rows){
-			shopentity Prod = new shopentity();
-			Prod.setId((int)row.get("id"));
-			Prod.setName((String)row.get("name"));
-			Prod.setDescription((String)row.get("description"));
-			Prod.setPrice((float)row.get("price"));
-			Prod.setId_category((int)row.get("id_category"));
-			Prod.setImg_src((String)row.get("img_src"));
-			result.add(Prod);
-		}
-		
-		return result;
-	
-    }*/
+  
+    @GetMapping("/showNewProductsMiniatures")
+    @ResponseBody
+    public String showNewProductsMiniatures(@RequestParam("ssidd") String req) {
+    	List<newproduct> listka = newproducts.findByUserId(getSessionObject(req).User.getId());
+    	String pom ="Zapisane wersje Robocze<br>";
+    	newproduct pomp = new newproduct();
+    	if(listka!=null && listka.size()>0)
+    		for(int j=0;j<listka.size();j++) {
+    			pomp = listka.get(j);
+    			pom += "<a href='"+server+"/editNewProduct/"+pomp.getId()+"'><div style='display: grid; width: 50%;height: 200px;overflow-y: hidden;'><a class=\"closebutton\" href=\""+server+"/deleteNewProduct/"+pomp.getId()+"\">x</a>";
+    			pom+="<ul class=\"slides\">";
+    			
+    		String[] pom2 = null;
+    		if(pomp.getImg_src()!=null)
+    		pom2=splitString(pomp.getImg_src());
+    		if(pom2!=null)
+    		for(int i=0;i<pom2.length;i++)
+    			pom+="<li class=\"slide\"><div class=\"productimages\"><img src=\""+server+"/getImg/"+pomp.getReserved_id()+"_/"+pom2[i]+"\"></div></li>";
+    		pom+="</ul>";
+    		pom+="<div class=\"productinfo\">"+pomp.getName()+"</div>";
+    	
+    	pom+="</div></a>";
+    	}
+        return pom;
+    }
+    @GetMapping("/deleteNewProduct/{id}")
+    public RedirectView deletenewproduct(@PathVariable("id") int id, HttpServletRequest req){
+    	if(getSessionObject(req).User!=null && getSessionObject(req).User.getId()== newproducts.getById(id).getId_user()) {
+    		int size = newproducts.findAll().size();
+    		int lastr = newproducts.getById(id).getReserved_id();
+    		if(newproducts.existsById(id)) {
+	    		newproducts.deleteProduct(id);
+	    		newproductscontent.deleteProduct(id);
+	    		if(size!=0) {
+	    			newproductscontent.setMethod(size, id);
+	    			newproducts.setMethod(size , id, lastr);
+	    		}
+    		}
+    	}
+    	return new RedirectView(server+"/newproduct/1");
+    }
+    @GetMapping("/editNewProduct/{id}")
+    public RedirectView editnewproduct(@PathVariable("id") int id, HttpServletRequest req){
+    		if(getSessionObject(req).User!=null && newproducts.existsById(id) && getSessionObject(req).User.getId()== newproducts.getById(id).getId_user()) {
+    			getSessionObject(req).NewProduct=newproducts.getById(id);
+    			getSessionObject(req).NewProductContent=newproductscontent.getById(getSessionObject(req).NewProduct.getId());
+    			getSessionObject(req).newproductchecked=true;
+    			System.out.println(id+" "+newproducts.getById(id).getId()+newproductscontent.getById(id).getId());
+    		}
+    	return new RedirectView(server+"/newproduct/1");
+    }
+    @GetMapping("/createNewProduct")
+    public RedirectView createNewProduct(@RequestParam("ssidd") String req){
+    	if(getSessionObject(req).User!=null) {
+    	int id=newproducts.findAll().size()+Products.findAll().size()+1;
+    			newproducts.insertProduct(getSessionObject(req).User.getId(), id);
+    			newproducts.flush();
+    			getSessionObject(req).NewProduct=newproducts.findByReservedId(id);
+    			getSessionObject(req).newproductchecked=true;
+    	}
+    	return new RedirectView(getSessionObject(req).lastURL);
+    }
+    @GetMapping("/savechanges")
+    @ResponseBody
+    public String saveChanges(@RequestParam("ssidd") String req){
+    	String pom = "<script></script>";
+    		getSessionObject(req).newproductchecked=false;
+        return pom;
+    }
     @GetMapping("/getContent")
     @ResponseBody
     public String getcontent(@RequestParam("ssidd") String req) throws IOException {
@@ -612,6 +955,7 @@ public class content {
     @ResponseBody
     public String getCategoriesMethodDrop(@RequestParam("ssidd") String ssidd) {
     	sessionObjects obiekt = getSessionObject(ssidd);
+    	List<categories> wyniki = AllCategories.findAll();
 		if(categorylinedrop==null || changeInCat)
 		{
 			categorylinedrop="";
@@ -620,8 +964,12 @@ public class content {
 			else
 				categorylinedrop+="<a class=\"dropdown-toggle\" id=\"categoryplaceholder\" href=\"#\">"+AllCategories.getById(obiekt.currentCat).getName()+"</a>";
 			categorylinedrop+="<ul class=\"dropdown\"><li><a href=\"#\" id='cat0' onclick='setCategory(0)'> Wszystkie Kategorie</a></li>";
-			for(int i=1;i<10;i++)
-				categorylinedrop+=getOptGrDrop(i);
+			for(int i=0;i<9;i++) {
+					categorylinedrop+="<li><a class=\"dropdown-toggle\" href=\"#\" >"+wyniki.get(i).getName()+"</a>\r\n"
+		    				+ "    <ul class=\"dropdown\"><li><a href=\"#\" id='cat"+wyniki.get(i).getId()+"' onclick='setCategory("+wyniki.get(i).getId()+")'> Wszystkie w "+wyniki.get(i).getName()+"</a></li>";
+					categorylinedrop+=getOptGrDrop(wyniki.get(i).getId());
+					categorylinedrop+="</ul></li>";
+			}
 			categorylinedrop+="</ul>";
 			changeInCat=false;
 		}
@@ -644,9 +992,10 @@ public class content {
 					Proposition = Products.getMostVisited(pom[i]);
 					if(Proposition!=null && Proposition.size()>0)
 					for(int j=0;(j<Proposition.size() && j<10 && licznik<50);j++)
-					{
-						licznik++;
+					{	
 						getpom+=this.productMiniatureTemplate(Proposition.get(j));
+						licznik++;
+						
 					}
 			}
 		}
@@ -655,15 +1004,10 @@ public class content {
 			List<shopentity> Proposition = new ArrayList<>();
 			Proposition = Products.getMostVisited("");
 			if(Proposition!=null && Proposition.size()>0)
-				for(int i=0;(i<50 && licznik<50 && i<Proposition.size());i++)
+				for(int i=0;(i<50 && licznik<50 && i<Proposition.size());i++) {
 					getpom+=this.productMiniatureTemplate(Proposition.get(i));
-		}
-		if(licznik<50){
-			List<shopentity> Proposition = new ArrayList<>();
-			Proposition = Products.findAll();
-			if(Proposition!=null && Proposition.size()>0)
-				for(int i=0;(i<50 && licznik<50 && i<Proposition.size());i++)
-					getpom+=this.productMiniatureTemplate(Proposition.get(i));
+					licznik++;
+				}
 		}
 		return getpom;
 }
@@ -675,7 +1019,7 @@ public class content {
 		{
 			String[] pom = null;
 			pom = this.splitString(UsersInfo.getById(getSessionObject(req).User.getId()).getId_products());
-			if(pom!=null && pom.length>0)
+			if(pom!=null && pom.length>0 && !pom[0].isBlank())
 			{
 				List<shopentity> Proposition = Products.findAll();
 				for(int i=0;(i<pom.length);i++) 
@@ -692,10 +1036,10 @@ private String getOptGrDrop(int id) {
 	List<categories> wyniki=AllCategories.findByAttributes(String.valueOf(id));
 	for(int i=0;i<wyniki.size();i++) {
 		//System.out.println(wyniki.get(i).getName());
-		if(wyniki.get(i).getId()==id) {
+		if(wyniki.get(i).getId()>=id*10 && wyniki.get(i).getId()<id*10+10) {
     		pom+="<li><a class=\"dropdown-toggle\" href=\"#\" >"+wyniki.get(i).getName()+"</a>\r\n"
     				+ "    <ul class=\"dropdown\"><li><a href=\"#\" id='cat"+wyniki.get(i).getId()+"' onclick='setCategory("+wyniki.get(i).getId()+")'> Wszystkie w "+wyniki.get(i).getName()+"</a></li>";
-    		pom+=getOptGrDrop(id*10+1);
+    		pom+=getOptGrDrop(wyniki.get(i).getId());
 	    	pom+="</ul></li>";
 		}
 	}
@@ -750,6 +1094,7 @@ private String getOptGrDrop(int id) {
     @ResponseBody
     public ResponseEntity<?> setNewProductName(@RequestParam("name") String name, @RequestParam("ssidd") String req) {
     	getSessionObject(req).NewProduct.setName(name);
+    	newproducts.updatename(getSessionObject(req).NewProduct.getId(), name);
     	return ResponseEntity.ok("Success");
     }
     @RequestMapping("setNewProductCategory")
@@ -758,6 +1103,7 @@ private String getOptGrDrop(int id) {
     	if(category.isBlank())
     		return ResponseEntity.ok("Blank parameter");
     	getSessionObject(req).NewProduct.setId_category(Integer.valueOf(category));
+    	newproducts.updatecategory(getSessionObject(req).NewProduct.getId(), Integer.valueOf(category));
     	return ResponseEntity.ok("Success");
     }
     @RequestMapping("setNewProductPrice")
@@ -766,14 +1112,15 @@ private String getOptGrDrop(int id) {
     	if(price.isBlank())
     		return ResponseEntity.ok("Blank parameter");
     	else
-    		System.out.println(price);
     	getSessionObject(req).NewProduct.setPrice(Float.valueOf(price));
+    	newproducts.updateprice(getSessionObject(req).NewProduct.getId(), Float.valueOf(price));
     	return ResponseEntity.ok("Success");
     }
     @RequestMapping("setNewProductDescription")
     @ResponseBody
     public ResponseEntity<?> setNewProductDesc(@RequestParam("description") String description, @RequestParam("ssidd") String req) {
     	getSessionObject(req).NewProduct.setDescription(description);
+    	newproducts.updatedescription(getSessionObject(req).NewProduct.getId(), description);
     	return ResponseEntity.ok("Success");
     }
     @RequestMapping("setNewProductDelivery")
@@ -786,6 +1133,7 @@ private String getOptGrDrop(int id) {
     		else
     			pom+=deliverys[i]+"#";
     	getSessionObject(req).NewProductContent.setId_delivery(pom);
+    	newproductscontent.updatedelivery(getSessionObject(req).NewProduct.getId(),getSessionObject(req).NewProductContent.getId_delivery());
     	return ResponseEntity.ok("Success");
     }
     
@@ -800,7 +1148,7 @@ private String getOptGrDrop(int id) {
     		pom+="<input type=\"text\" id=\"productname\" name=\"name\" placeholder=\"Wpisz nazwę produktu\" value=\""+getSessionObject(req).NewProduct.getName()+"\" onchange=\"setName()\">"
     				+"<script>document.getElementById(\"title\").innerHTML=\""+getSessionObject(req).NewProduct.getName()+" - sklep\";</script>";
     	}
-    	if(getSessionObject(req).NewProduct.getId_categorie()==0) {
+    	if(getSessionObject(req).NewProduct.getId_category()==0) {
     		pom+="		<input style=\"display:none\" type=\"text\" id=\"category\" name=\"id_category\" onchange=\"setCategoryF()\">"
     				+"<div id=\"popselect\">"
     			    + "			<div id=\"nav\">"
@@ -809,13 +1157,13 @@ private String getOptGrDrop(int id) {
     			    + "		</div>";
     	}
     	else {
-    		pom+="		<input style=\"display:none\" type=\"text\" id=\"category\" name=\"id_category\" value=\""+getSessionObject(req).NewProduct.getId_categorie()+"\" onchange=\"setCategoryF()\">"
+    		pom+="		<input style=\"display:none\" type=\"text\" id=\"category\" name=\"id_category\" value=\""+getSessionObject(req).NewProduct.getId_category()+"\" onchange=\"setCategoryF()\">"
     				+"<div id=\"popselect\">"
     			    + "			<div id=\"nav\">"
     			    +this.getCategoriesMethodDrop(req)
     			    +"			</div>"
     			    + "		</div>"
-    			    + "<script> setCategoryP("+getSessionObject(req).NewProduct.getId_categorie()+") </script>";
+    			    + "<script> setCategoryP("+getSessionObject(req).NewProduct.getId_category()+") </script>";
     	}
     		if(getSessionObject(req).NewProduct.getDescription()==null) {
         		pom+="<input type=\"text\" id=\"productdesc\" name=\"description\" placeholder=\"Dodaj opis produktu\" onchange=\"setDescription()\">";
@@ -825,7 +1173,7 @@ private String getOptGrDrop(int id) {
         	}
     		if(getSessionObject(req).NewProduct.getPrice()>0) {
     			pom+="		<div style=\"display:flex\">"
-        			    + "		<input type=\"text\" id=\"productprice\" name=\"price\" value=\""+getSessionObject(req).NewProduct.getPrice()+"\" placeholder=\"Podaj cenę produktu\" onchange=\"setPrice()\"><label for=\"price\">zł</label>"
+        			    + "		<input type=\"number\" min-value='0' step='0.01' id=\"productprice\" name=\"price\" value=\""+getSessionObject(req).NewProduct.getPrice()+"\" placeholder=\"Podaj cenę produktu\" onchange=\"setPrice()\"><label for=\"price\">zł</label>"
         			    + "		</div>";
         	}
         	else {
@@ -840,6 +1188,11 @@ private String getOptGrDrop(int id) {
     @ResponseBody
     public String getnewproddeliverys(@RequestParam("ssidd") String req) {
     	String pom = "";
+    	if(!newproductscontent.existsById(getSessionObject(req).NewProduct.getId())) {
+    	newproductscontent.insertProduct(getSessionObject(req).NewProduct.getId(), LocalDate.now());
+		newproductscontent.flush();
+    	}
+		getSessionObject(req).NewProductContent=newproductscontent.getById(getSessionObject(req).NewProduct.getId());
     		pom+="<select id=\"delopt\" name=\"delivery\" multiple>"
     				+ showdeliverys()
     				+ "		</select>\r\n"
@@ -847,7 +1200,7 @@ private String getOptGrDrop(int id) {
     				+ "			<option id=\"deloptpom0\" onclick=\"re_setAll()\">Wybierz Wszystkie</option>"
     				+ showdeliveryspom()
     				+ "		</select>";
-    	if(getSessionObject(req).NewProductContent.getId_delivery()!=null && !getSessionObject(req).NewProductContent.getId_delivery().isBlank())
+    	if(getSessionObject(req).NewProductContent!=null && getSessionObject(req).NewProductContent.getId_delivery()!=null && !getSessionObject(req).NewProductContent.getId_delivery().isBlank())
     	{
     		String pom2 [] = this.splitString(getSessionObject(req).NewProductContent.getId_delivery());
     		pom+="<script>";
@@ -867,7 +1220,7 @@ private String getOptGrDrop(int id) {
     @ResponseBody
     public String getcontenttext(@RequestParam("ssidd")String req) throws IOException {
     	String pom = "";
-    	File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getId()+".html");
+    	File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getReserved_id()+".html");
 	      convertFile.getAbsolutePath();
 	      if(convertFile.exists())
 	      {
@@ -1032,7 +1385,7 @@ private String getOptGrDrop(int id) {
     		if(pom2!=null)
     		for(int i=0;i<pom2.length;i++)
     			imgpom+="<li class=\"slide\"><div class=\"productimages\"><a class=\"closebutton\" "
-    					+ "href=\"/deleteimg/"+i+"\">x</a><img src=\""+server+"/getImg/"+getSessionObject(req).NewProduct.getId()+"_/"+pom2[i]+"\"></div></li>";
+    					+ "href=\"/deleteimg/"+i+"\">x</a><img src=\""+server+"/getImg/"+getSessionObject(req).NewProduct.getReserved_id()+"_/"+pom2[i]+"\"></div></li>";
     	}
     		imgpom+="</ul>";
         return imgpom;
@@ -1051,7 +1404,6 @@ private String getOptGrDrop(int id) {
     	imgpom+="</ul>";
         return imgpom;
     }
-    ;
     @GetMapping("/getContentImgs")
     @ResponseBody
     public String showimgscontent(@RequestParam("ssidd") String req) {
@@ -1063,11 +1415,11 @@ private String getOptGrDrop(int id) {
     		pom2=splitString(getSessionObject(req).NewProduct.getImg_src());
     		if(pom2!=null)
     		for(int i=0;i<pom2.length;i++)
-    			imgpom+="<li class=\"slide\"><div class=\"productimages\"><img id=\"img"+i+"\" src=\""+server+"/getImg/"+getSessionObject(req).NewProduct.getId()+"_/"+pom2[i]+"\"</div></li>";
+    			imgpom+="<li class=\"slide\"><div class=\"productimages\"><img id=\"img"+i+"\" src=\""+server+"/getImg/"+getSessionObject(req).NewProduct.getReserved_id()+"_/"+pom2[i]+"\"</div></li>";
     		if(!getSessionObject(req).contentimg.isBlank()) {
     			pom2=splitString(getSessionObject(req).contentimg);
     			for(int i=0;i<pom2.length;i++)
-        			imgpom+="<li class=\"slide\"><div class=\"productimages\"><img id=\"imgc"+i+"\" src=\""+server+"/getconImg/"+getSessionObject(req).NewProduct.getId()+"_/"+pom2[i]+"\"></div></li>";
+        			imgpom+="<li class=\"slide\"><div class=\"productimages\"><img id=\"imgc"+i+"\" src=\""+server+"/getconImg/"+getSessionObject(req).NewProduct.getReserved_id()+"_/"+pom2[i]+"\"></div></li>";
     		}
 			imgpom+="<li class=\"slide\"><div class=\"productimages\"><div id=\"addimg\" onclick=\"addImg()\">+</div></div></li>";
     	}
@@ -1089,7 +1441,7 @@ private String getOptGrDrop(int id) {
 	}
     @GetMapping("/deleteimg/{id}")
     @ResponseBody
-    public RedirectView delimgs(@PathVariable("id") int id, @RequestParam("ssidd") String req) {
+    public RedirectView delimgs(@PathVariable("id") int id, HttpServletRequest req) {
     	String imgpom=null;
     	String[] pom2 = null;
     		if(getSessionObject(req).NewProduct.getImg_src()!=null)
@@ -1103,9 +1455,10 @@ private String getOptGrDrop(int id) {
     				imgpom+=pom2[i]+"#";
     			}
     			else
-    				deleteFile(pom2[i], req);
+    				deleteFile(pom2[i], req.getSession().getId());
     		}
     		getSessionObject(req).NewProduct.setImg_src(imgpom);
+    		newproducts.updateimg_src(getSessionObject(req).NewProduct.getId(), getSessionObject(req).NewProduct.getImg_src());
         return new RedirectView("/"+getSessionObject(req).lastURL);
     }
     private String[] splitString(String toSplit){
@@ -1137,32 +1490,25 @@ private String getOptGrDrop(int id) {
     @PostMapping("/createnewproduct")
     public ResponseEntity<?> createnewproduct(@RequestParam("ssidd") String req) {
     		float min_cost=0;
-    		Products.insertProduct(getSessionObject(req).NewProduct.getId(),getSessionObject(req). NewProduct.getName(),
+    		Products.insertProduct(getSessionObject(req).NewProduct.getReserved_id(),getSessionObject(req).NewProduct.getName(),
     				getSessionObject(req).NewProduct.getDescription(), getSessionObject(req).NewProduct.getImg_src(),
-    				getSessionObject(req).NewProduct.getId_categorie(), getSessionObject(req).NewProduct.getPrice());
-	    	ProductsContent.insertProductCon(getSessionObject(req).NewProduct.getId(), getSessionObject(req).NewProductContent.getId_delivery(), getSessionObject(req).NewProductContent.getContent_path());
+    				getSessionObject(req).NewProduct.getId_category(), getSessionObject(req).NewProduct.getPrice());
+	    	ProductsContent.insertProductCon(getSessionObject(req).NewProduct.getReserved_id(), getSessionObject(req).NewProductContent.getId_delivery(), getSessionObject(req).NewProductContent.getContent_path());
 	    	String idpom = UsersInfo.getById(getSessionObject(req).User.getId()).getId_products();
-	    	UsersInfo.createdpages(getSessionObject(req).User.getId(), idpom+getSessionObject(req).NewProduct.getId()+"#");
+	    	UsersInfo.createdpages(getSessionObject(req).User.getId(), idpom+getSessionObject(req).NewProduct.getReserved_id()+"#");
 	    	String[] pom=this.splitString(getSessionObject(req).NewProductContent.getId_delivery());
 	    	min_cost=Deliverys.getById(Integer.valueOf(pom[0])).getPrice();
 	    	for(int i=1;i<pom.length;i++)
 	    		if(min_cost>Deliverys.getById(Integer.valueOf(pom[i])).getPrice())
 	    			min_cost=Deliverys.getById(Integer.valueOf(pom[i])).getPrice();
-	    	ProductsInfo.insertProductInfo(getSessionObject(req).NewProduct.getId(), java.time.LocalDate.now(), min_cost);
-	    	for(int i=0;i<reservedidsP.size();i++)
-	    		if(reservedidsP.get(i)==getSessionObject(req).NewProduct.getId())
-	    	reservedidsP.remove(i);
-	    	getSessionObject(req).NewProduct = new shopentity();
-	    	getSessionObject(req).NewProductContent = new shopentitycontent();
+	    	ProductsInfo.insertProductInfo(getSessionObject(req).NewProduct.getReserved_id(), java.time.LocalDate.now(), min_cost);
+	    	newproducts.deleteProduct(getSessionObject(req).NewProduct.getId());
+	    	newproductscontent.deleteProduct(getSessionObject(req).NewProduct.getId());
+	    	getSessionObject(req).newproductchecked=false;
 	      return ResponseEntity.ok("Page created successfully.");
 	   }
     @PostMapping("/uploadimg")
     public ResponseEntity<?> imgFilesUpload(@RequestParam("file") List<MultipartFile> files, @RequestParam("ssidd") String req) throws IOException {
-    	int ssss=Products.findAll().size()+1+reservedidsP.size();
-    	this.reservedidsP.add(ssss);
-    	getSessionObject(req).NewProduct.setId(ssss);
-    	getSessionObject(req).NewProduct.setId_category(0);
-    	getSessionObject(req).NewProduct.setPrice((float) 0.0);
     	String imgpom=null;
     	if(getSessionObject(req).NewProduct.getImg_src()!=null)
     		imgpom=getSessionObject(req).NewProduct.getImg_src();
@@ -1174,6 +1520,7 @@ private String getOptGrDrop(int id) {
     		imgpom+=files.get(i).getOriginalFilename()+"#";
     	}
     	getSessionObject(req).NewProduct.setImg_src(imgpom);
+    	newproducts.updateimg_src(getSessionObject(req).NewProduct.getId(), imgpom);
     	return ResponseEntity.ok("Files uploaded successfully.");
     }
     @PostMapping("/uploadcontentimg")
@@ -1182,19 +1529,20 @@ private String getOptGrDrop(int id) {
     	if(getSessionObject(req).contentimg!=null && !getSessionObject(req).contentimg.isBlank())
     	imgpom = getSessionObject(req).contentimg;
     	imgpom+= file.getOriginalFilename()+"#";
-    	File convertFile = new File("./src/main/resources/static/show/productscontents/con_"+getSessionObject(req).NewProduct.getId()+"_"+file.getOriginalFilename());
+    	File convertFile = new File("./src/main/resources/static/show/productscontents/con_"+getSessionObject(req).NewProduct.getReserved_id()+"_"+file.getOriginalFilename());
 	      convertFile.getAbsolutePath();
 	      convertFile.createNewFile();
 	      FileOutputStream fout = new FileOutputStream(convertFile);
 	      fout.write(file.getBytes());
 	      fout.close();
 	      getSessionObject(req).contentimg=imgpom;
+	      newproductscontent.updatecontent_img(getSessionObject(req).NewProduct.getReserved_id(),getSessionObject(req).contentimg);
     	return ResponseEntity.ok("File uploaded successfully.");
     }
     @PostMapping("/uploadhtml")
     public ResponseEntity<?> htmlfileUpload(@RequestParam("file") MultipartFile file, @RequestParam("ssidd") String req) throws IOException {
-    	getSessionObject(req).NewProductContent.setContent_path("../productscontents/product"+getSessionObject(req).NewProduct.getId()+".html");
-	      File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getId()+".html");
+    	getSessionObject(req).NewProductContent.setContent_path("../productscontents/product"+getSessionObject(req).NewProduct.getReserved_id()+".html");
+	      File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getReserved_id()+".html");
 	      convertFile.getAbsolutePath();
 	      if(convertFile.exists())
 	    	  convertFile.delete();
@@ -1202,12 +1550,13 @@ private String getOptGrDrop(int id) {
 	      FileOutputStream fout = new FileOutputStream(convertFile);
 	      fout.write(file.getBytes());
 	      fout.close();
+	      newproductscontent.updatecontent(getSessionObject(req).NewProduct.getId(),getSessionObject(req).NewProductContent.getContent_path());
 	      return ResponseEntity.ok("File uploaded successfully.");
 	   }
     @RequestMapping("/uploadhtmltext")
       public ResponseEntity<?> htmltextUpload(@RequestParam("file") String content, @RequestParam("ssidd") String req) throws IOException {
-    	getSessionObject(req).NewProductContent.setContent_path("../productscontents/product"+getSessionObject(req).NewProduct.getId()+".html");
-  	      File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getId()+".html");
+    	getSessionObject(req).NewProductContent.setContent_path("../productscontents/product"+getSessionObject(req).NewProduct.getReserved_id()+".html");
+  	      File convertFile = new File("./src/main/resources/static/show/productscontents/product"+getSessionObject(req).NewProduct.getReserved_id()+".html");
   	      convertFile.getAbsolutePath();
   	      if(convertFile.exists())
   	    	  convertFile.delete();
@@ -1215,10 +1564,11 @@ private String getOptGrDrop(int id) {
   	      FileOutputStream fout = new FileOutputStream(convertFile);
   	      fout.write(content.getBytes());
   	      fout.close();
+  	      newproductscontent.updatecontent(getSessionObject(req).NewProduct.getId(),getSessionObject(req).NewProductContent.getContent_path());
   	      return ResponseEntity.ok("File created successfully.");
   	   }
     	   public void imgfileUpload( MultipartFile file, @RequestParam("ssidd") String req) throws IOException {
-    	      File convertFile = new File("./src/main/resources/static/show/productscontents/img_"+getSessionObject(req).NewProduct.getId()+"_"+file.getOriginalFilename());
+    	      File convertFile = new File("./src/main/resources/static/show/productscontents/img_"+getSessionObject(req).NewProduct.getReserved_id()+"_"+file.getOriginalFilename());
     	      convertFile.getAbsolutePath();
     	      convertFile.createNewFile();
     	      FileOutputStream fout = new FileOutputStream(convertFile);
@@ -1226,7 +1576,7 @@ private String getOptGrDrop(int id) {
     	      fout.close();
     	   }
     	   public void deleteFile( String pathsrc, @RequestParam("ssidd") String req) {
-     	      File convertFile = new File("./src/main/resources/static/show/productscontents/img_"+getSessionObject(req).NewProduct.getId()+"_"+pathsrc);
+     	      File convertFile = new File("./src/main/resources/static/show/productscontents/img_"+getSessionObject(req).NewProduct.getReserved_id()+"_"+pathsrc);
      	      convertFile.getAbsolutePath();
      	      convertFile.delete();
      	   }

@@ -40,15 +40,15 @@
 	<div id="userContainer">
  	  <c:if test="${logged!=null && logged==true && userlogin!=null}"><div id="hellouser"><h3>Zalogowano jako, ${userlogin}!</h3></div> 
  	  <div id="usrsetcon"> <a href="${pageContext.request.contextPath}/logout" id="logout">Wyloguj się</a>
- 	  <a href="${pageContext.request.contextPath}/settings" id="settings">Ustawienia</a></div></c:if>
+ 	  <a href="${pageContext.request.contextPath}/settings" id="settings">Panel Użytkownika</a></div></c:if>
  	  <c:if test="${logged==null || logged==false || userlogin==null}">
  	  <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login">
  	  <div id="nav2">
  	  <a class="dropdown-toggle" href="#">Zaloguj Się</a>
- 	  	<ul class="dropdown"><li>
+ 	  	<ul class="dropdown" style="border: 0;"><li style="outline: 0;">
 		<input class="loginform" type="text" name="login" placeholder="login"></input></li>
-		<li><input class="loginform" type="password" name="password" placeholder="password"></input></li>
-		<li><input id="loginformB" type="submit" value="Zaloguj się">
+		<li style="outline: 0;"><input class="loginform" type="password" name="password" placeholder="password"></input></li>
+		<li style="outline: 0;"><input id="loginformB" type="submit" value="Zaloguj się">
 		</li>
 		</ul>
 		</div>

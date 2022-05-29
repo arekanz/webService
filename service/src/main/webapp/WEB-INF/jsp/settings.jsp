@@ -5,7 +5,7 @@
 <html lang="pl-PL">
 <head>
 <meta charset="utf-8">
-<title>Ustawienia Konta</title>
+<title>Panel Użytkownika</title>
 <link rel="stylesheet"  href="${pageContext.request.contextPath}/css/style.css">
 <script>
 
@@ -42,6 +42,10 @@ function emailValidate(){
 }
 function changeMail(){
 	document.getElementById("mchF").style.display="grid";
+}
+function cancel(){
+	document.getElementById("mchF").style.display="none";
+	document.getElementById("pchF").style.display="none";
 }
 function setMail(){
 	var email = document.getElementById("mchFinp").value;
@@ -140,18 +144,22 @@ function addcommunicates(){
 </head>
 <body>
 <div id="loading"><h2>Przetwarzanie żądania.</h2><div id="loadanim"></div></div>
-<div id="confirm" style="display: none"><h2>Zmiana wprowadzona pomyślnie</h2><button class="settings" onclick="ok()">OK</button></div>
-<div id="mchF" style="display: none">
+<div id="confirm" style="display:none; width: 40%; margin: 0 auto; position: fixed; top: 200px; background-color: white; border: 1px #777 solid; left: 25%;padding: 5px; text-align:center;"><h2>Zmiana wprowadzona pomyślnie</h2><button class="settings" onclick="ok()">OK</button></div>
+<div id="mchF" style="display:none; width: 40%; margin: 0 auto; position: fixed; top: 200px; background-color: white; border: 1px #777 solid; left: 25%;padding: 5px; text-align:center;">
+	<h3>Zmiana adresu email</h3>
 	<input id="mchFinp" type="text" placeholder="Podaj email">
 	<input id="mchFpass" type="password" placeholder="Podaj hasło">
 	<button onclick="setMail()">Zmień email</button>
-	<p id="mchFerr">Email jest niepoprawny i/lub nie podano hasła</p>
+	<p id="mchFerr" style="display: none">Email jest niepoprawny i/lub nie podano hasła</p>
+	<button onclick="cancel()">Anuluj</button>
 </div>
-<div id="pchF" style="display: none">
+<div id="pchF" style="display:none; width: 40%; margin: 0 auto; position: fixed; top: 200px; background-color: white; border: 1px #777 solid; left: 25%;padding: 5px; text-align:center;">
+	<h3>Zmiana hasła</h3>
 	<input id="pchFinp" type="password" placeholder="Podaj hasło">
 	<input id="pchFpass" type="password" placeholder="Podaj stare hasło">
 	<button onclick="setPass()">Zmień hasło</button>
-	<p id="pchFerr">Hasło jest niepoprawne i/lub hasła się nie zgadzają</p>
+	<p id="pchFerr" style="display: none">Hasło jest niepoprawne i/lub hasła się nie zgadzają</p>
+	<button onclick="cancel()">Anuluj</button>
 </div>
 	<jsp:include page="UserModule.jsp"></jsp:include>
 	<div id="settingscontainer" style='display: grid;'>

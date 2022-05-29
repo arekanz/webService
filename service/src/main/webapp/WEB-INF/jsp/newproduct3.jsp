@@ -112,6 +112,10 @@ async function dalej(){
 	else
 		window.alert("Plik nie ma zawartości lub nie został wgrany na serwer");
 }
+window.onbeforeunload = function () {
+	var pppp=window.open('${pageContext.request.contextPath}/savechanges?ssidd=${ssidd}', '_blank');
+	pppp.close();
+};
 </script>
 <meta charset="utf-8">
 <title>Nowy produkt - sklep</title>

@@ -48,6 +48,10 @@ async function addComm(type,id){
 	  	  window.alert("Błąd połączenia z serwerem");
 	  }
 }
+function editComm(type,id){
+	document.getElementById("communicate"+id).readOnly=false;
+	document.getElementById("baton"+id).style.display="block";
+}
 async function getTextFromStream(readableStream) {
     let reader = readableStream.getReader();
     let utf8Decoder = new TextDecoder();
@@ -68,14 +72,17 @@ async function getTextFromStream(readableStream) {
 	<div id="loading"><h2>Przetwarzanie żądania.</h2><div id="loadanim"></div></div>
 	<jsp:include page="UserModule.jsp"></jsp:include>
 	<div id="settingscontainer" style='display: grid;'>
-	<div id="container">
-		<div id="communicatesconproducts">
+	<div id="container" style="display:grid;">
+		<p>Komunikaty - Produkty</p>
+		<div id="communicatesconproducts" style="display:grid;">
 			
 		</div>
-		<div id="communicatesconcomments">
+		<p>Komunikaty - Komentarze</p>
+		<div id="communicatesconcomments" style="display:grid;">
 			
 		</div>
-		<div id="communicatesconusers">
+		<p>Komunikaty - Użytkownicy</p>
+		<div id="communicatesconusers" style="display:grid;">
 			
 		</div>
 	</div>

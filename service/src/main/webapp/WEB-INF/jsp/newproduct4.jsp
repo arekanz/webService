@@ -47,6 +47,10 @@ async function createpage(){
 	function iResize() {
 	    document.getElementById('podglad').style.height = (document.getElementById('podglad').contentWindow.document.body.offsetHeight + 20) + 'px';
 	}
+	window.onbeforeunload = function () {
+		var pppp=window.open('${pageContext.request.contextPath}/savechanges?ssidd=${ssidd}', '_blank');
+		pppp.close();
+	};
 	</script>
 		<form id="pdgpom" style="display: none" target="podglad" action="${pageContext.request.contextPath}/getContentText" method="get">
     <input type="text" name="ssidd" value="${ssidd }" />

@@ -99,6 +99,9 @@ div#nav a{
     margin-left: 10px;
     max-height: 180px;
 }
+iframe{
+	overflow-y: hidden;	
+}
 /*@media print{*/
 .page
       {
