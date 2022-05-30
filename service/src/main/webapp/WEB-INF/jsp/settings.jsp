@@ -119,7 +119,7 @@ function ok(){
 	document.getElementById("pchF").style.display="none";
 }
 function newProduct(){
-	document.location.replace("${pageContext.request.contextPath}/newproduct/1");
+	document.location.replace("${pageContext.request.contextPath}/newproduct");
 }
 function myProducts(){
 	document.location.replace("${pageContext.request.contextPath}/myproducts");

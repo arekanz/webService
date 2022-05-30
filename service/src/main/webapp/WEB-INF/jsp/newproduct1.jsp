@@ -5,10 +5,6 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script type="text/javascript">
-window.onbeforeunload = function () {
-	var pppp=window.open('${pageContext.request.contextPath}/savechanges?ssidd=${ssidd}', '_blank');
-	pppp.close();
-};
 async function fileUpload(){
 		  let formData = new FormData();
 		  for(var i=0;i<productimg.files.length;i++){

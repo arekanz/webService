@@ -165,12 +165,17 @@ public class content {
 		obiekt.lastURL="/main";
 		return new ModelAndView("main");
 	}
-	
+	@GetMapping("/newproduct")
+	public ModelAndView newproduct(@PathVariable(value="id",required=false) String id, HttpServletRequest req) {
+		if(getSessionObject(req).logged==false)
+		{
+			getSessionObject(req).lastURL="newproduct/"+id;
+			return logInFalse();
+		}
+		return new ModelAndView("newproduct");
+	}
 	@GetMapping("/newproduct/{id}")
 	public ModelAndView newProduct(@PathVariable(value="id",required=false) String id, HttpServletRequest req) {
-		
-		if(id.isBlank() || getSessionObject(req).NewProduct.getImg_src()==null)
-			id="1";
 		String urlpom = "newproduct"+id;
 		if(getSessionObject(req).logged==false)
 		{
@@ -181,8 +186,8 @@ public class content {
 		{
 			return new ModelAndView("newproduct");
 		}
-		if(getSessionObject(req).newproductchecked==false)
-			this.createNewProduct(req.getSession().getId());
+		if(getSessionObject(req).newproductchecked==false && !id.isBlank())
+			this.createNewProduct(req);
 		return new ModelAndView(urlpom);
 	}
 	@RequestMapping(value = "/getImg/{id_product}/{img_name}", method = RequestMethod.GET)
@@ -871,13 +876,16 @@ public class content {
     @ResponseBody
     public String showNewProductsMiniatures(@RequestParam("ssidd") String req) {
     	List<newproduct> listka = newproducts.findByUserId(getSessionObject(req).User.getId());
-    	String pom ="Zapisane wersje Robocze<br>";
+    	String pom ="<h1 style='width: 100%'>Zapisane wersje Robocze</h1><hr><div style=\"display: flex;\">";
     	newproduct pomp = new newproduct();
+    	String name="Nowy Produkt";
     	if(listka!=null && listka.size()>0)
     		for(int j=0;j<listka.size();j++) {
     			pomp = listka.get(j);
-    			pom += "<a href='"+server+"/editNewProduct/"+pomp.getId()+"'><div style='display: grid; width: 50%;height: 200px;overflow-y: hidden;'><a class=\"closebutton\" href=\""+server+"/deleteNewProduct/"+pomp.getId()+"\">x</a>";
-    			pom+="<ul class=\"slides\">";
+    			if(pomp.getName()!=null && !pomp.getName().isBlank())
+    				name=pomp.getName();
+    			pom += "<div onclick='document.location.href=\""+server+"/editNewProduct/"+pomp.getId()+"\";' style='display: grid; text-align:center; width: 40%;height: 250px;overflow-y: hidden;border: 1px solid #777; margin: 5px;'><a class=\"closebutton\" style='left: +5px;' href=\""+server+"/deleteNewProduct/"+pomp.getId()+"\">x</a>";
+    			pom+="<ul style='height: 200px; border: 1px solid black;' class=\"slides\">";
     			
     		String[] pom2 = null;
     		if(pomp.getImg_src()!=null)
@@ -885,12 +893,15 @@ public class content {
     		if(pom2!=null)
     		for(int i=0;i<pom2.length;i++)
     			pom+="<li class=\"slide\"><div class=\"productimages\"><img src=\""+server+"/getImg/"+pomp.getReserved_id()+"_/"+pom2[i]+"\"></div></li>";
+    		if(pom2==null || pom2.length==0)
+    			pom+="<li class='slide'><div class=\"productimages\"><img src=\""+server+"/img/brakobrazka.png\"></div></li>";
     		pom+="</ul>";
-    		pom+="<div class=\"productinfo\">"+pomp.getName()+"</div>";
+    		pom+="<div class=\"productinfo\">"+name+"</div>";
     	
-    	pom+="</div></a>";
+    	pom+="</div>";
     	}
-        return pom;
+    	return pom+"</div>";
+    	
     }
     @GetMapping("/deleteNewProduct/{id}")
     public RedirectView deletenewproduct(@PathVariable("id") int id, HttpServletRequest req){
@@ -912,14 +923,15 @@ public class content {
     public RedirectView editnewproduct(@PathVariable("id") int id, HttpServletRequest req){
     		if(getSessionObject(req).User!=null && newproducts.existsById(id) && getSessionObject(req).User.getId()== newproducts.getById(id).getId_user()) {
     			getSessionObject(req).NewProduct=newproducts.getById(id);
-    			getSessionObject(req).NewProductContent=newproductscontent.getById(getSessionObject(req).NewProduct.getId());
+    			if(!newproductscontent.existsById(id))
+    				newproductscontent.insertProduct(id, LocalDate.now());
+    			getSessionObject(req).NewProductContent=newproductscontent.getById(id);
     			getSessionObject(req).newproductchecked=true;
-    			System.out.println(id+" "+newproducts.getById(id).getId()+newproductscontent.getById(id).getId());
     		}
     	return new RedirectView(server+"/newproduct/1");
     }
     @GetMapping("/createNewProduct")
-    public RedirectView createNewProduct(@RequestParam("ssidd") String req){
+    public RedirectView createNewProduct(HttpServletRequest req){
     	if(getSessionObject(req).User!=null) {
     	int id=newproducts.findAll().size()+Products.findAll().size()+1;
     			newproducts.insertProduct(getSessionObject(req).User.getId(), id);
@@ -927,7 +939,7 @@ public class content {
     			getSessionObject(req).NewProduct=newproducts.findByReservedId(id);
     			getSessionObject(req).newproductchecked=true;
     	}
-    	return new RedirectView(getSessionObject(req).lastURL);
+    	return new RedirectView(server+"/newproduct/1");
     }
     @GetMapping("/savechanges")
     @ResponseBody
@@ -1111,8 +1123,12 @@ private String getOptGrDrop(int id) {
     public ResponseEntity<?> setNewProductPrice(@RequestParam("price") String price, @RequestParam("ssidd") String req) {
     	if(price.isBlank())
     		return ResponseEntity.ok("Blank parameter");
-    	else
-    	getSessionObject(req).NewProduct.setPrice(Float.valueOf(price));
+    	else {
+    		int z=Math.round(Float.valueOf(price)*100);
+    		float f=((float)z)/100;
+    	getSessionObject(req).NewProduct.setPrice(f);
+    	
+    	}
     	newproducts.updateprice(getSessionObject(req).NewProduct.getId(), Float.valueOf(price));
     	return ResponseEntity.ok("Success");
     }

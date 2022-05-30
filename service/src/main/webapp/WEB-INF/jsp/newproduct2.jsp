@@ -211,7 +211,7 @@ function send(){
 	if(name!=null && desc!=null && category!=null && price!=null && delivery!=null && name!="" && desc!="" && category!="" && price!="" && delivery!="")
 		{
 		if(price<0)
-			price=1.00
+			price=1.00;
 		document.location.replace("./3");
 		}
 	else
@@ -220,10 +220,6 @@ function send(){
 function back(){
 	document.location.replace("./1");
 }
-window.onbeforeunload = function () {
-		var pppp=window.open('${pageContext.request.contextPath}/savechanges?ssidd=${ssidd}', '_blank');
-		pppp.close();
-	};
 </script>
 <meta charset="utf-8">
 <title id="title">Nowy produkt - sklep</title>
